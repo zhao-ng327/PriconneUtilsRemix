@@ -102,30 +102,35 @@ def sound() -> None:
     if not os.path.isfile(Constants.SOUNDMANIFEST):
         print("Please do DBCheck first before using this as the file needed to download stuff in this script is downloaded from DBCheck")
         input("Press ENTER to continue")
+        return
 
-    else:
-        snd_type = input("Select sound type: bgm, voice\n")
-
-        try:
-            snd_name = Constants.SOUND_TYPES['name'][snd_type.strip()]
-            snd_dir = Constants.SOUND_TYPES['dir'][snd_type.strip()]
-            name, hash = generate_list(snd_name, snd_dir)
-
-        except KeyError:
-            print("> INVALID TYPE! <\nCurrent types are only 'bgm' 'voice'\n")
-            input("Press ENTER to continue")
-
+    snd_type = input("Select sound type: voice, bgm\n").strip()
+    if snd_type == 'voice':
+        cmn_choice = input("Select voice type: cmn, all\n").strip()
+        if cmn_choice == 'cmn':
+            id_choice = input("Enter ID or 'all':\n").strip()
+            if id_choice == 'all':
+                snd_name = Constants.VOICE_NAME_CMN  # vo_cmn.+\.(acb|awb)
+            else:
+                snd_name = re.compile(f'vo_cmn_{id_choice}\.(acb|awb)')
         else:
-            with ThreadPoolExecutor() as thread:
-                thread.map(download_file, name, hash)
-                thread.shutdown(wait=True)
-            
-            with multiprocessing.Pool() as pool:
-                pool.map(convert_file, name)
-                pool.terminate()
+            snd_name = Constants.VOICE_NAME
+        snd_dir = Constants.VOICE_DIR
+    else:
+        snd_name = Constants.BGM_NAME
+        snd_dir = Constants.BGM_DIR
 
-        finally:
-            input(">> Download and conversion completed!\nPress ENTER to continue")
+    name, hash = generate_list(snd_name, snd_dir)
+
+    with ThreadPoolExecutor() as thread:
+        thread.map(download_file, name, hash)
+
+    
+    with multiprocessing.Pool() as pool:
+        pool.map(convert_file, name)
+
+
+    input(">> Download and conversion completed!\nPress ENTER to continue")
 
 
 if __name__ == '__main__':

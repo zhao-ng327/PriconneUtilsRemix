@@ -49,18 +49,8 @@ SOUND_DIR = os.path.join(CUR_DIR, 'sound')
 SOUNDMANIFEST = os.path.join(DB_DIR, 'soundmanifest')
 
 BGM_DIR = os.path.join(SOUND_DIR, 'bgm')
-BGM_NAME = re.compile('bgm_.+\.(acb||awb)')
+BGM_NAME = re.compile('bgm_.+\.(acb|awb)')
 
 VOICE_DIR = os.path.join(SOUND_DIR, 'voice')
-VOICE_NAME = re.compile('vo_.+\.(acb||awb)')
-
-SOUND_TYPES = {
-    'dir': {
-        'bgm': BGM_DIR,
-        'voice': VOICE_DIR,
-    },
-    'name': {
-        'bgm': BGM_NAME,
-        'voice': VOICE_NAME,
-    }
-}
+VOICE_NAME = re.compile('vo_.+\.(acb|awb)')
+VOICE_NAME_CMN = re.compile('vo_cmn.+\.(acb|awb)')
