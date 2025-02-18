@@ -3,6 +3,12 @@ import re
 
 CUR_DIR = os.getcwd()
 
+# lib
+CODE_DIR = os.path.join(CUR_DIR, 'scripts')
+CONESHELL_DIR = os.path.join(CODE_DIR, 'Coneshell')
+FFMPEG_DIR = os.path.join(CODE_DIR, 'ffmpeg')
+VGMSTREAM_DIR = os.path.join(CODE_DIR, 'vgmstream-win64')
+
 # DBCheck constants
 CONFIG_FILE = os.path.join(CUR_DIR, 'config.json')
 DB_DIR = os.path.join(CUR_DIR, 'database')
@@ -51,6 +57,12 @@ SOUNDMANIFEST = os.path.join(DB_DIR, 'soundmanifest')
 BGM_DIR = os.path.join(SOUND_DIR, 'bgm')
 BGM_NAME = re.compile('bgm_.+\.(acb|awb)')
 
+BGM_WAV_DIR = os.path.join(BGM_DIR, 'wav')
+BGM_MP3_DIR = os.path.join(BGM_DIR, 'mp3')
+
 VOICE_DIR = os.path.join(SOUND_DIR, 'voice')
 VOICE_NAME = re.compile('vo_.+\.(acb|awb)')
 VOICE_NAME_CMN = re.compile('vo_cmn.+\.(acb|awb)')
+
+VOICE_WAV_DIR = os.path.join(VOICE_DIR, 'wav')
+VOICE_MP3_DIR = os.path.join(VOICE_DIR, 'mp3')

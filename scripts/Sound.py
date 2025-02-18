@@ -30,63 +30,45 @@ def generate_list(snd_name: str, snd_dir: str) -> tuple[list[str], list[str]]:
 
 def download_file(name: str, hash: str):
     dirName = os.path.dirname(name)
-    realFileName = os.path.basename(name)
-    nameCheck = re.compile(f'{realFileName.split(".")[0]}.+?m4a')
-    checked = check_file(nameCheck, dirName)
+    realFileName = os.path.basename(name).split(".")[0]
 
-    if not os.path.isfile(name) and checked is False:
+    hadDL = check_file(re.compile(f'{realFileName}.*\.(acb|awb)'), dirName)
+
+    if not os.path.isfile(name) and hadDL is False:
         print(f'Downloading {name}...')
         r = requests.get(f'{Constants.SOUND_URL}/{hash[:2]}/{hash}').content
         with open(name, 'wb') as f:
             f.write(r)
 
     else:
-        print(f'File [{realFileName}] already exists')
+        print(f'File [{name}] already exists')
 
-def convert_file(name: str):
-    dir_name = os.path.dirname(name)
-    realFilename = os.path.basename(name)
-    
-    acbUnpackDir = os.path.join(dir_name, f'_acb_{realFilename}')
-    acbInternal = os.path.join(acbUnpackDir, 'internal')
-    acbExternal = os.path.join(acbUnpackDir, 'external')
-    
-    nameCheck = re.compile(f'{realFilename.split(".")[0]}.+?m4a')
-    checked = check_file(nameCheck, dir_name)
+'''
+def convert_WAV(args):
+    name, mode = args
+    realFilename = os.path.basename(name).split(".")[0]
 
-    if checked:
-        # print(f'Name is {checked}')
-        # print(f'Filename: {realFilename} | Checkfile: {check_file(nameCheck, dir_name)}')
-        try:
-            if name.endswith('.acb') and os.path.isfile(name):
-                os.system(f'acb2wavs "{name}" -b 00000000 -a 0030D9E8 -n')
-                os.remove(name)
-                os.remove(f'{name.split(".")[0]}.awb')
-            
-                if os.path.isdir(acbInternal):
-                    for waveFile in os.listdir(acbInternal):
-                        m4aFile = f'{waveFile.split(".")[0]}.m4a'
-                        # print(f'Abspath waveFile: {os.path.abspath(waveFile)} | Abspath m4aFile: {os.path.abspath(m4aFile)}')
-                        print(f'Converting {waveFile} to {m4aFile}...')
-                        os.system('ffmpeg -hide_banner -loglevel quiet -y '
-                        f'-i "{os.path.abspath(os.path.join(acbInternal, waveFile))}" -vbr 5 -movflags faststart '
-                        f'"{os.path.abspath(os.path.join(dir_name, m4aFile))}"')
-                
-                elif os.path.isdir(acbExternal):
-                    for waveFile in os.listdir(acbExternal):
-                        m4aFile = f'{waveFile.split(".")[0]}.m4a'
-                        print(f'Converting {waveFile} to {m4aFile}...')
-                        os.system(
-                            'ffmpeg -hide_banner -loglevel quiet -y '
-                            f'-i "{os.path.abspath(os.path.join(acbExternal, waveFile))}" -vbr 5 -movflags faststart '
-                            f'"{os.path.abspath(os.path.join(dir_name, m4aFile))}"'
-                        )
-            
-                shutil.rmtree(acbUnpackDir)
-                print(">>> Conversion done!")
-        
-        except Exception as e:
-            print(f"An ERROR occured\n{e}")
+    if os.path.exists(name) and name.endswith('.awb'):
+        wav_dir = getattr(Constants, f"{mode}_WAV_DIR")
+        if not os.path.exists():
+            os.makedirs(wav_dir)
+        wav_path = os.path.join(wav_dir, f"{realFilename}_?s.wav")
+        with open(os.devnull, 'w') as devnull:
+            os.system(f'cd {Constants.VGMSTREAM_DIR} && vgmstream-cli.exe -S 0 -o {wav_path} {name} > {os.devnull} 2>&1')
+'''
+
+def convert_MP3(args):
+    name, mode = args
+    realFilename = os.path.basename(name).split(".")[0]
+
+    if os.path.exists(name) and name.endswith('.awb'):
+        mp3_dir = getattr(Constants, f"{mode}_MP3_DIR")
+        if not os.path.exists(mp3_dir):
+            os.makedirs(mp3_dir)
+        mp3_path = os.path.join(mp3_dir, f"{realFilename}_?s.mp3")
+        with open(os.devnull, 'w') as devnull:
+            os.system(f'cd {Constants.VGMSTREAM_DIR} && vgmstream-cli.exe -S 0 -o {mp3_path} {name} > {os.devnull} 2>&1')
+
 
 
 def check_file(fn: str, fd: str) -> bool:
@@ -104,10 +86,12 @@ def sound() -> None:
         input("Press ENTER to continue")
         return
 
-    snd_type = input("Select sound type: voice, bgm\n").strip()
-    if snd_type == 'voice':
-        cmn_choice = input("Select voice type: cmn, all\n").strip()
-        if cmn_choice == 'cmn':
+    snd_type = input("Select sound type:\n1. voice\n2. bgm\n").strip()
+    mode = "BGM"
+    if snd_type == '1':
+        mode = "VOICE"
+        cmn_choice = input("Select voice type:\n1. cmn\n2. all\n").strip()
+        if cmn_choice == '1':
             id_choice = input("Enter ID or 'all':\n").strip()
             if id_choice == 'all':
                 snd_name = Constants.VOICE_NAME_CMN  # vo_cmn.+\.(acb|awb)
@@ -124,10 +108,10 @@ def sound() -> None:
 
     with ThreadPoolExecutor() as thread:
         thread.map(download_file, name, hash)
-
     
+    mode_list = [mode] * len(name)
     with multiprocessing.Pool() as pool:
-        pool.map(convert_file, name)
+        pool.map(convert_MP3, zip(name, mode_list))
 
 
     input(">> Download and conversion completed!\nPress ENTER to continue")

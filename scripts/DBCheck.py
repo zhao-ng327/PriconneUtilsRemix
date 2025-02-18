@@ -40,7 +40,8 @@ def download_manifest(type: str) -> None:
             database = requests.get(f'{t}/{hash[:2]}/{hash}').content
             with open('master.cdb', 'wb') as cdb:
                 cdb.write(database)
-            os.system(f'Coneshell_call.exe -cdb master.cdb "{os.path.join(Constants.DB_DIR, "master.db")}"')
+            os.system(f'cd {Constants.CONESHELL_DIR} && Coneshell_call.exe -cdb master.cdb {os.path.join(Constants.DB_DIR, "master.db")}')
+            #os.system(f'"{Constants.CONESHELL_DIR}" -cdb master.cdb "{os.path.join(Constants.DB_DIR, "master.db")}"')
             os.remove('master.cdb')
             print("> Finished downloading database!\n")
 
