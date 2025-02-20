@@ -1,13 +1,14 @@
 import os
 import re
+import sys
 import sqlite3
 import traceback
 import subprocess
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 
+
 import requests
-import PyCriCodecs as pcc
 
 import Constants
 
@@ -64,108 +65,15 @@ def convert_file(name: str) -> None:
     Converts all of the usm files to mp4 files
     """
 
-    try:
-        name_mp4 = name.split(".")[0] + ".mp4"
-        if not os.path.isfile(name_mp4):
-            filenames = extract(name, os.path.dirname(name))
-            ffmpeg_combine = "ffmpeg -hide_banner -loglevel quiet -y "
-            for fname in filenames[1:]:
-                ffmpeg_combine += f'-i {fname} '
-            
-            ffmpeg_combine += name_mp4
-            print(f'Converting [{os.path.basename(name)}]...')
-            subprocess.run(ffmpeg_combine, check=True)
+    realFilename = os.path.basename(name).split(".")[0]
 
-            for file in filenames:
-                os.remove(file)
-    
-    except subprocess.CalledProcessError:
-        print("FFmpeg not found!")
-        print("Please install FFmpeg first or make sure its in the PATH variable")
-        input("Press ENTER to exit")
-        exit(1)
-
-    except NotImplementedError as nie:
-        print(nie)
-
-    except Exception:
-        print(f'An ERROR occured\n{traceback.format_exc()}')
-
-
-def extract(filename: str, dirname: str = "") -> list[str]:
-    """
-    Slightly modified extract() function from PyCriCodecs's usm.py
-    to accomodate Priconne's USM\n
-    Returns a list of all filenames inside of the USM
-    """
-
-    # Gets a table consisting of video/audio metadata
-    usm = pcc.USM(filename)
-    usm.demux()
-    table = usm.get_metadata()[0]["CRIUSF_DIR_STREAM"]
-    filenames: list[str] = []
-    for obj in table:
-        fname: str = obj["filename"][1]
-
-        # Taken from PyCriCodecs' usm.py extract() method
-        # Adjust filenames and/or paths to extract them into the current directory.
-        if ":\\" in fname: # Absolute paths.
-            fname = fname.split(":\\", 1)[1]
-        elif ":/" in fname: # Absolute paths.
-            fname = fname.split(":/", 1)[1]
-        elif ":"+os.sep in fname: # Absolute paths.
-            fname = fname.split(":"+os.sep, 1)[1]
-        elif ".."+os.sep in fname: # Relative paths.
-            fname = fname.rsplit(".."+os.sep, 1)[1]
-        elif "../" in fname: # Relative paths.
-            fname = fname.rsplit("../", 1)[1]
-        elif "..\\" in fname: # Relative paths.
-            fname = fname.rsplit("..\\", 1)[1]
-        fname = ''.join(x for x in fname if x not in ':?*<>|"') # removes illegal characters.
-
-        fname = os.path.join(dirname, fname)
-        if fname not in filenames:
-            filenames.append(fname)
-    
-    keys = list(usm.output.keys())
-    while (idx := len(filenames[1:])) < len(usm.output.keys()):
-        fname: str = filenames[0].split(".")[0]
-        if "SFV" in keys[idx]:
-            fname += ".avi"
-
-        elif "SFA" in keys[idx]:
-            fname += ".wav"
-
-        else:
-            raise NotImplementedError(
-                f'Unknown type of data: {keys[idx]}\n'
-                f'Header: {list(usm.output.values())[idx][:4]}'
-            )
-        
-        filenames.append(fname)
-
-    for i, (k, data) in enumerate(usm.output.items()):
-        try:
-            if "SFV" in k:
-                with open(filenames[i+1], "wb") as out:
-                    out.write(data)
-            
-            elif "SFA" in k:
-                audio = pcc.ADX.decode(data)
-                with open(filenames[i+1], "wb") as out:
-                    out.write(audio)
-            
-            else:
-                raise NotImplementedError(f'Unknown type of data: {k}\nHeader: {data[:4]}')
-
-        except IndexError:
-            print(
-                'Filenames amount < Expected output items\n'
-                f'Filenames = {filenames}\n'
-                f'Expected output = {list(usm.output.keys())}\n'
-            )
-        
-    return filenames
+    if os.path.exists(name) and name.endswith('.usm'):
+        mp4_dir = getattr(Constants, f"MP4_DIR")
+        if not os.path.exists(mp4_dir):
+            os.makedirs(mp4_dir)
+        mp3_path = os.path.join(mp4_dir, f"{realFilename}.mp4")
+        with open(os.devnull, 'w') as devnull:
+            os.system(f'cd {Constants.FFMPEG_DIR} && ffmpeg -i {name} -c:v libx264 -preset slow -crf 18 -c:a aac -b:a 128k {mp3_path} > {os.devnull} 2>&1')
 
 
 def download_all(mov_name: str, dir_name: str) -> None:
@@ -204,8 +112,21 @@ def movie() -> None:
         mov_dict = {"1": "cutin", "2": "l2d", "3": "summon", "4": "event"}
         mov_type = mov_dict[mov_type]
         dir_name = Constants.MOVIE_TYPES["dir"][mov_type]
-        mov_name = Constants.MOVIE_TYPES["name"][mov_type]
-
+        if mov_type == 'l2d':
+            id_choice = input("Enter ID or 'all':\n").strip()
+            if id_choice == 'all':
+                mov_name = Constants.MOVIE_TYPES["name"][mov_type]
+            else:
+                mov_name = re.compile(f'character_{id_choice}_000002\.usm')
+        elif mov_type == 'summon':
+            id_choice = input("Enter ID or 'all':\n").strip()
+            if id_choice == 'all':
+                mov_name = Constants.MOVIE_TYPES["name"][mov_type]
+            else:
+                mov_name = re.compile(f'character_{id_choice}_000001\.usm')
+        else:
+            mov_name = Constants.MOVIE_TYPES["name"][mov_type]
+        
     except KeyError:
         print("> INVALID TYPE! <")
         print("Current types are only 'cutin' (1), 'l2d' (2), 'summon' (3), or 'event' (4)\n")

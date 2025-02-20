@@ -33,6 +33,8 @@ SUMMON_NAME = re.compile('character_\d+_000001\.usm')
 EVENT_DIR = os.path.join(MOVIE_DIR, 'event')
 EVENT_NAME = re.compile('story_5\d{5}[7-9]0[1-2]\.usm')
 
+MP4_DIR = os.path.join(MOVIE_DIR, 'mp4')
+
 MOVIE_TYPES = {
     'dir': {
         'cutin': CUTIN_DIR,
