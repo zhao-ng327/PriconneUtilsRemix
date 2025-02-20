@@ -18,7 +18,6 @@ Scripts written in Python to get the master database, BGM files, L2D, UB Cutin, 
 
 ## Used Lib
 
-- [PyCriCodecs](https://github.com/Youjose/PyCriCodecs)
 - [vgmstream](https://github.com/vgmstream/vgmstream)
 - [FFmpeg](https://github.com/BtbN/FFmpeg-Builds)
 
