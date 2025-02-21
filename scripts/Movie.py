@@ -71,9 +71,9 @@ def convert_file(name: str) -> None:
         mp4_dir = getattr(Constants, f"MP4_DIR")
         if not os.path.exists(mp4_dir):
             os.makedirs(mp4_dir)
-        mp3_path = os.path.join(mp4_dir, f"{realFilename}.mp4")
+        mp4_path = os.path.join(mp4_dir, f"{realFilename}.mp4")
         with open(os.devnull, 'w') as devnull:
-            os.system(f'cd {Constants.FFMPEG_DIR} && ffmpeg -i {name} -c:v libx264 -preset slow -crf 18 -c:a aac -b:a 128k {mp3_path} > {os.devnull} 2>&1')
+            os.system(f'cd {Constants.FFMPEG_DIR} && ffmpeg -i {name} -c:v libx264 -preset slow -crf 18 -c:a aac -b:a 128k {mp4_path} > {os.devnull} 2>&1')
 
 
 def download_all(mov_name: str, dir_name: str) -> None:
